@@ -1,6 +1,6 @@
 <?php
 
-namespace DirectMailTeam\DirectMail\Hooks;
+namespace DirectMailTeam\DirectMail\Xclass;
 
 /*
  * This file is part of the TYPO3 CMS project.
@@ -19,32 +19,24 @@ use DirectMailTeam\DirectMail\Utility\DmRegistryUtility;
 use TYPO3\CMS\Core\Context\UserAspect;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Hooks which is called while FE rendering
- *
- * Class TypoScriptFrontendController
- */
-class TypoScriptFrontendController
+class TypoScriptFrontendController extends \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController
 {
-    /**
-     * If a backend user is logged in and
-     * a frontend usergroup is specified in the GET parameters, use this
-     * group to simulate access to an access protected page with content to be sent
-     */
-    public function simulateUsergroup($parameters, \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController $typoScriptFrontendController)
+    public function initUserGroups()
     {
+        parent::initUserGroups();
+
         $directMailFeGroup = (int)GeneralUtility::_GET('dmail_fe_group');
         $accessToken = (string)GeneralUtility::_GET('access_token');
         if ($directMailFeGroup > 0 && GeneralUtility::makeInstance(DmRegistryUtility::class)->validateAndRemoveAccessToken($accessToken)) {
             /** @var UserAspect $userAspect */
-            $userAspect = $typoScriptFrontendController->getContext()->getAspect('frontend.user');
+            $userAspect = $this->getContext()->getAspect('frontend.user');
 
             // we reset the content if required
             if (!in_array($directMailFeGroup, $userAspect->getGroupIds(), true)) {
                 // code was refactor, using a different hook!
-                $typoScriptFrontendController->getContext()->setAspect(
+                $this->getContext()->setAspect(
                     'frontend.user',
-                    new UserAspect($typoScriptFrontendController->fe_user, [$directMailFeGroup])
+                    new UserAspect($this->fe_user, [$directMailFeGroup]),
                 );
             }
         }
